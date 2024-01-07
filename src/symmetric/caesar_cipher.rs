@@ -1,7 +1,20 @@
 use std::collections::HashMap;
 
+/*
+    Basically, this encryption method shifts letters in the alphabet a given `N` times, `N` being a secret
+    used to encrypt and decrypt the method.
+
+    In this implementation, I'm using ascii table as a reference so the character `A` is represented by
+    65 in the decimal base (https://www.asciitable.com/) and using 5 as a secret, the result would be 65 + 5 = 70
+    which represents F, so in a plain text phrase, an `A` would be `F`.
+
+    Since this is a symmetric encryption method, the secret must be shared between the two parties trying to communicate
+    securely.
+*/
+
 const MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET: [char; 12] =
     ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'H', 'R', 'D', 'L', 'U'];
+
 pub fn encrypt(plain_text: &str, secret_key: u8) -> String {
     let mut cipher_text = String::new();
     for c in plain_text.to_uppercase().chars() {
@@ -21,6 +34,17 @@ pub fn decrypt(cipher_text: &str, secret_key: u8) -> String {
 
     plain_text
 }
+
+/*
+    Two ways of breaking caesar cipher method
+
+    Brute force attack: Since I'm using ascii code, the possible secrets are in a range between 0 and 255,
+    so this method will try to use every possible secret to decrypt the message.
+
+    Frequency analysis: It will try to get the most frequent letters in the cipher text
+    and compare with the most frequent letters in the english alphabet, generating a list of
+    possible secrets to try and decrypt the message;
+*/
 
 pub fn brute_force_attack(cipher_text: &str) -> Vec<String> {
     let mut result = vec![];
