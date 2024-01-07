@@ -14,22 +14,27 @@ use std::collections::HashMap;
 
 const MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET: [char; 12] =
     ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'H', 'R', 'D', 'L', 'U'];
+const ASCII_LENGTH: i32 = 255;
 
-pub fn encrypt(plain_text: &str, secret_key: u8) -> String {
+pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
     let mut cipher_text = String::new();
     for c in plain_text.to_uppercase().chars() {
-        let ascii_code = (c as u8).saturating_add(secret_key) % u8::MAX;
-        cipher_text.push_str(char::from(ascii_code).to_string().as_ref());
+        let ascii_code = (c as i32 + secret_key) % ASCII_LENGTH;
+        if let Some(v) = char::from_u32(ascii_code as u32) {
+            cipher_text.push_str(v.to_string().as_ref());
+        }
     }
 
     cipher_text
 }
 
-pub fn decrypt(cipher_text: &str, secret_key: u8) -> String {
+pub fn decrypt(cipher_text: &str, secret_key: i32) -> String {
     let mut plain_text = String::new();
-    for c in cipher_text.to_uppercase().chars() {
-        let ascii_code = (c as u8).saturating_sub(secret_key) % u8::MAX;
-        plain_text.push_str(char::from(ascii_code).to_string().as_ref());
+    for c in cipher_text.chars() {
+        let ascii_code = (c as i32 - secret_key + ASCII_LENGTH) % ASCII_LENGTH;
+        if let Some(v) = char::from_u32(ascii_code as u32) {
+            plain_text.push_str(v.to_string().as_ref());
+        }
     }
 
     plain_text
@@ -49,7 +54,7 @@ pub fn decrypt(cipher_text: &str, secret_key: u8) -> String {
 pub fn brute_force_attack(cipher_text: &str) -> Vec<String> {
     let mut result = vec![];
 
-    for i in 0..u8::MAX {
+    for i in 0..ASCII_LENGTH {
         result.push(decrypt(cipher_text, i));
     }
 
@@ -90,19 +95,29 @@ pub fn frequency_analysis(cipher_text: &str) -> Vec<u8> {
 mod test {
     use super::*;
     #[test]
-    fn encrypt_message() {
+    fn encrypt_decrypt_message() {
         let message = "Hello World";
         let secret = 3;
         let result = encrypt(&message, secret);
         assert_eq!(result, "KHOOR#ZRUOG");
-    }
+        let decrypted = decrypt(&result, secret);
+        assert_eq!(decrypted, "HELLO WORLD");
 
-    #[test]
-    fn decrypt_message() {
-        let cipher_text = "KHOOR#ZRUOG";
-        let secret = 3;
-        let result = decrypt(&cipher_text, secret);
-        assert_eq!(result, "HELLO WORLD");
+        // Test overflow case
+        let secret = 80;
+        let result = encrypt(&message, secret);
+        assert_eq!(
+            result,
+            "\u{98}\u{95}\u{9c}\u{9c}\u{9f}p§\u{9f}¢\u{9c}\u{94}"
+        );
+        let decrypted = decrypt(&result, secret);
+        assert_eq!(decrypted, "HELLO WORLD");
+
+        let secret = 230;
+        let result = encrypt(&message, secret);
+        assert_eq!(result, "/,336\u{7}>693+");
+        let decrypted = decrypt(&result, secret);
+        assert_eq!(decrypted, "HELLO WORLD");
     }
 
     #[test]
@@ -128,9 +143,9 @@ mod test {
         let result = frequency_analysis(cipher_text);
         for i in 0..MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET.len() {
             if i == 10 {
-                assert_eq!(decrypt(cipher_text, result[i]), "HELLO WORLD");
+                assert_eq!(decrypt(cipher_text, result[i] as i32), "HELLO WORLD");
             } else {
-                assert_ne!(decrypt(cipher_text, result[i]), "HELLO WORLD");
+                assert_ne!(decrypt(cipher_text, result[i] as i32), "HELLO WORLD");
             }
         }
 
