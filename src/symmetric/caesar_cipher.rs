@@ -73,17 +73,17 @@ pub fn frequency_analysis(cipher_text: &str) -> Vec<u8> {
 
     freq.sort_by(|a, b| b.1.cmp(&a.1));
 
-    let Some((most_frequent_letter, _)) = freq.get(0) else {
-        return vec![]
-    };
+    if let Some((most_frequent_letter, _)) = freq.get(0) {
+        let mut result = vec![0u8; MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET.len()];
+        for (i, c) in MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET.iter().enumerate() {
+            let ascii_number = *most_frequent_letter as u8;
+            result[i] = ascii_number.saturating_sub(*c as u8) % u8::MAX;
+        }
 
-    let mut result = vec![0u8; 12];
-    for (i, c) in MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET.iter().enumerate() {
-        let ascii_number = *most_frequent_letter as u8;
-        result[i] = ascii_number.saturating_sub(*c as u8) % u8::MAX;
+        result
+    } else {
+        vec![]
     }
-
-    result
 }
 
 #[cfg(test)]
