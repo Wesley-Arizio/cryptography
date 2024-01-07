@@ -1,5 +1,3 @@
-use std::ops::Index;
-
 const ALPHABET: &[char] = &[
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
     'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -33,7 +31,7 @@ pub fn decrypt(cipher_text: &str, secret_key: usize) -> String {
     plain_text
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod test {
     use super::*;
     #[test]
