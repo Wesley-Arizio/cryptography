@@ -19,11 +19,11 @@ pub fn encrypt(plain_text: &str, secret_key: usize) -> String {
     cipher_text
 }
 
-pub fn decrypt(cipher_text: &str, secret: usize) -> String {
+pub fn decrypt(cipher_text: &str, secret_key: usize) -> String {
     let mut plain_text = String::new();
     for c in cipher_text.to_uppercase().chars() {
         if let Some(index) = ALPHABET.iter().position(|v| *v == c) {
-            let new_index = (index - secret) % ALPHABET.len();
+            let new_index = (index - secret_key) % ALPHABET.len();
             plain_text.push_str(&ALPHABET[new_index].to_string());
         } else {
             plain_text.push_str(" ");
