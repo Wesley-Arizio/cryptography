@@ -13,11 +13,21 @@ pub fn encrypt(plain_text: &str, secret_key: usize) -> String {
         }
     }
 
-    cipher_text.to_string()
+    cipher_text
 }
 
-pub fn decrypt() -> String {
-    todo!()
+pub fn decrypt(cipher_text: &str, secret: usize) -> String {
+    let mut plain_text = String::new();
+    for c in cipher_text.to_uppercase().chars() {
+        if let Some(index) = ALPHABET.iter().position(|v| *v == c) {
+            let new_index = (index - secret) % ALPHABET.len();
+            plain_text.push_str(&ALPHABET[new_index].to_string());
+        } else {
+            plain_text.push_str(" ");
+        }
+    }
+
+    plain_text
 }
 
 #[cfg(tests)]
@@ -27,12 +37,15 @@ mod test {
     fn encrypt_message() {
         let message = "Hello World";
         let secret  = 3;
-        let result = encrypt(&message, secret);
+        let result  = encrypt(&message, secret);
         assert_eq!(result, "KHOOR ZRUOG");
     }
 
     #[test]
     fn decrypt_message() {
-        assert_eq!(1 + 1, 2);
+        let cipher_text = "KHOOR ZRUOG";
+        let secret = 3;
+        let result = decrypt(&cipher_text, secret);
+        assert_eq!(result, "HELLO WORLD");
     }
 }
