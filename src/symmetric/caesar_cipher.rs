@@ -12,8 +12,10 @@ use std::collections::HashMap;
     securely.
 */
 
+#[allow(dead_code)]
 const MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET: [char; 12] =
     ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'H', 'R', 'D', 'L', 'U'];
+
 const ASCII_LENGTH: i32 = 255;
 
 pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
@@ -51,6 +53,7 @@ pub fn decrypt(cipher_text: &str, secret_key: i32) -> String {
     possible secrets to try and decrypt the message;
 */
 
+#[allow(dead_code)]
 pub fn brute_force_attack(cipher_text: &str) -> Vec<String> {
     let mut result = vec![];
 
@@ -71,6 +74,7 @@ fn frequencies(text: &str) -> HashMap<char, i32> {
     map
 }
 
+#[allow(dead_code)]
 pub fn frequency_analysis(cipher_text: &str) -> Vec<u8> {
     let mut freq = frequencies(cipher_text)
         .into_iter()
