@@ -1,3 +1,4 @@
+use crate::symmetric::ASCII_LENGTH;
 use std::collections::HashMap;
 
 /*
@@ -16,15 +17,12 @@ use std::collections::HashMap;
 const MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET: [char; 12] =
     ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'H', 'R', 'D', 'L', 'U'];
 
-const ASCII_LENGTH: i32 = 255;
-
 pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
     let mut cipher_text = String::new();
     for c in plain_text.to_uppercase().chars() {
-        let ascii_code = (c as i32 + secret_key) % ASCII_LENGTH;
-        if let Some(v) = char::from_u32(ascii_code as u32) {
-            cipher_text.push_str(v.to_string().as_ref());
-        }
+        let secret = secret_key % ASCII_LENGTH;
+        let ascii_code = (c as i32 + secret) % ASCII_LENGTH;
+        cipher_text.push(ascii_code as u8 as char);
     }
 
     cipher_text
@@ -32,11 +30,10 @@ pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
 
 pub fn decrypt(cipher_text: &str, secret_key: i32) -> String {
     let mut plain_text = String::new();
+    let secret = secret_key % ASCII_LENGTH;
     for c in cipher_text.chars() {
-        let ascii_code = (c as i32 - secret_key + ASCII_LENGTH) % ASCII_LENGTH;
-        if let Some(v) = char::from_u32(ascii_code as u32) {
-            plain_text.push_str(v.to_string().as_ref());
-        }
+        let ascii_code = (c as i32 - secret + ASCII_LENGTH) % ASCII_LENGTH;
+        plain_text.push(ascii_code as u8 as char);
     }
 
     plain_text
@@ -109,17 +106,20 @@ mod test {
 
         // Test overflow case
         let secret = 80;
-        let result = encrypt(&message, secret);
+        let result = encrypt(message, secret);
         assert_eq!(
             result,
-            "\u{98}\u{95}\u{9c}\u{9c}\u{9f}p§\u{9f}¢\u{9c}\u{94}"
+            "\u{18}\u{15}\u{1c}\u{1c}\u{1f}p'\u{1f}\"\u{1c}\u{14}"
         );
         let decrypted = decrypt(&result, secret);
         assert_eq!(decrypted, "HELLO WORLD");
 
-        let secret = 230;
-        let result = encrypt(&message, secret);
-        assert_eq!(result, "/,336\u{7}>693+");
+        let secret = 200;
+        let result = encrypt(message, secret);
+        assert_eq!(
+            result,
+            "\u{10}\r\u{14}\u{14}\u{17}h\u{1f}\u{17}\u{1a}\u{14}\u{c}"
+        );
         let decrypted = decrypt(&result, secret);
         assert_eq!(decrypted, "HELLO WORLD");
     }
@@ -129,7 +129,7 @@ mod test {
         let message = "KHOOR#ZRUOG";
         let decrypted = brute_force_attack(message);
 
-        for i in 0..u8::MAX {
+        for i in 0..ASCII_LENGTH {
             match i {
                 3 => {
                     assert_eq!(decrypted[i as usize], "HELLO WORLD");
