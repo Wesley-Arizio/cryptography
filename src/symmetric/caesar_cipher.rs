@@ -1,4 +1,4 @@
-use crate::symmetric::ASCII_LENGTH;
+use crate::symmetric::ALPHABET;
 use std::collections::HashMap;
 
 /*
@@ -19,10 +19,11 @@ const MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET: [char; 12] =
 
 pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
     let mut cipher_text = String::new();
+    let secret = secret_key.abs() as usize % ALPHABET.len();
     for c in plain_text.to_uppercase().chars() {
-        let secret = secret_key % ASCII_LENGTH;
-        let ascii_code = (c as i32 + secret) % ASCII_LENGTH;
-        cipher_text.push(ascii_code as u8 as char);
+        let plain_text_index = ALPHABET.iter().position(|a| *a == c).unwrap_or_default();
+        let index = (plain_text_index + secret) % ALPHABET.len();
+        cipher_text.push(ALPHABET[index]);
     }
 
     cipher_text
@@ -30,10 +31,11 @@ pub fn encrypt(plain_text: &str, secret_key: i32) -> String {
 
 pub fn decrypt(cipher_text: &str, secret_key: i32) -> String {
     let mut plain_text = String::new();
-    let secret = secret_key % ASCII_LENGTH;
+    let secret = secret_key.abs() as usize % ALPHABET.len();
     for c in cipher_text.chars() {
-        let ascii_code = (c as i32 - secret + ASCII_LENGTH) % ASCII_LENGTH;
-        plain_text.push(ascii_code as u8 as char);
+        let cipher_text_char_index = ALPHABET.iter().position(|a| *a == c).unwrap_or_default();
+        let index = (ALPHABET.len() + cipher_text_char_index - secret) % ALPHABET.len();
+        plain_text.push(ALPHABET[index]);
     }
 
     plain_text
@@ -54,8 +56,8 @@ pub fn decrypt(cipher_text: &str, secret_key: i32) -> String {
 pub fn brute_force_attack(cipher_text: &str) -> Vec<String> {
     let mut result = vec![];
 
-    for i in 0..ASCII_LENGTH {
-        result.push(decrypt(cipher_text, i));
+    for i in 0..ALPHABET.len() {
+        result.push(decrypt(cipher_text, i as i32));
     }
 
     result
@@ -100,42 +102,36 @@ mod test {
         let message = "Hello World";
         let secret = 3;
         let result = encrypt(&message, secret);
-        assert_eq!(result, "KHOOR#ZRUOG");
+        assert_eq!(result, "KHOORCZRUOG");
         let decrypted = decrypt(&result, secret);
         assert_eq!(decrypted, "HELLO WORLD");
 
         // Test overflow case
         let secret = 80;
         let result = encrypt(message, secret);
-        assert_eq!(
-            result,
-            "\u{18}\u{15}\u{1c}\u{1c}\u{1f}p'\u{1f}\"\u{1c}\u{14}"
-        );
+        assert_eq!(result, "GDKKNZVNQKC");
         let decrypted = decrypt(&result, secret);
         assert_eq!(decrypted, "HELLO WORLD");
 
         let secret = 200;
         let result = encrypt(message, secret);
-        assert_eq!(
-            result,
-            "\u{10}\r\u{14}\u{14}\u{17}h\u{1f}\u{17}\u{1a}\u{14}\u{c}"
-        );
+        assert_eq!(result, "SPWWZKGZBWO");
         let decrypted = decrypt(&result, secret);
         assert_eq!(decrypted, "HELLO WORLD");
     }
 
     #[test]
     fn brute_force_attack_encrypted_message() {
-        let message = "KHOOR#ZRUOG";
+        let message = "KHOORCZRUOG";
         let decrypted = brute_force_attack(message);
 
-        for i in 0..ASCII_LENGTH {
+        for i in 0..ALPHABET.len() {
             match i {
                 3 => {
-                    assert_eq!(decrypted[i as usize], "HELLO WORLD");
+                    assert_eq!(decrypted[i], "HELLO WORLD");
                 }
                 _ => {
-                    assert_ne!(decrypted[i as usize], "HELLO WORLD");
+                    assert_ne!(decrypted[i], "HELLO WORLD");
                 }
             }
         }
@@ -143,7 +139,7 @@ mod test {
 
     #[test]
     fn frequency_analysis_attack() {
-        let cipher_text = "KHOOR#ZRUOG";
+        let cipher_text = "KHOORCZRUOG";
         let result = frequency_analysis(cipher_text);
         for i in 0..MOST_FREQUENT_LETTERS_IN_ENGLISH_ALPHABET.len() {
             if i == 10 {
