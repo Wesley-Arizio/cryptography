@@ -4,5 +4,6 @@ const ALPHABET: [char; 27] = [
 ];
 
 pub mod caesar_cipher;
+mod data_encryption_standard;
 pub mod one_time_pad;
 pub mod vigenere_cipher;
