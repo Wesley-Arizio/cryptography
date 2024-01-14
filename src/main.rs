@@ -2,6 +2,8 @@ use clap::{Parser, Subcommand};
 
 mod symmetric;
 
+const IV: &[u8; 16] = b"0000000000000000";
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -23,6 +25,12 @@ pub enum Encrypt {
         /// Secret word used to shift values in data in vigenere cipher method.
         secret: String,
     },
+    Aes {
+        /// Data to be encrypted
+        data: String,
+        /// 32 bit secret used to decrypt data
+        secret: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -37,6 +45,12 @@ pub enum Decrypt {
         /// Data to be decrypted
         data: String,
         /// Secret word used to shift values in data in vigenere cipher method.
+        secret: String,
+    },
+    Aes {
+        /// Data to be decrypted
+        data: String,
+        /// 32 bit secret used to decrypt data
         secret: String,
     },
 }
@@ -56,7 +70,7 @@ enum Command {
     },
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -69,6 +83,14 @@ fn main() {
                 let encrypted = symmetric::vigenere_cipher::encrypt(&data, &secret);
                 println!("Encrypted message: '{}'", encrypted);
             }
+            Encrypt::Aes { data, secret } => {
+                let encrypted = symmetric::advanced_encryption_standard::encrypt(
+                    data.as_bytes(),
+                    secret.as_bytes(),
+                    IV,
+                )?;
+                println!("Encrypted message: '{}'", encrypted);
+            }
         },
         Command::Decrypt { command } => match command {
             Decrypt::CaesarCipher { data, secret } => {
@@ -76,10 +98,16 @@ fn main() {
                 println!("Decrypted message: '{}'", decrypted);
             }
             Decrypt::VigenereCipher { data, secret } => {
-                let encrypted = symmetric::vigenere_cipher::decrypt(&data, &secret);
-                println!("Decrypted message: '{}'", encrypted);
+                let decrypted = symmetric::vigenere_cipher::decrypt(&data, &secret);
+                println!("Decrypted message: '{}'", decrypted);
+            }
+            Decrypt::Aes { data, secret } => {
+                let decrypted =
+                    symmetric::advanced_encryption_standard::decrypt(&data, secret.as_bytes(), IV)?;
+                println!("Decrypted message: '{}'", decrypted);
             }
         },
     }
-    // TODO - configure our main app to create a new file with the algorithm output
+
+    Ok(())
 }

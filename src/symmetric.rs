@@ -3,6 +3,7 @@ const ALPHABET: [char; 27] = [
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 ];
 
+pub mod advanced_encryption_standard;
 pub mod caesar_cipher;
 mod data_encryption_standard;
 pub mod one_time_pad;
