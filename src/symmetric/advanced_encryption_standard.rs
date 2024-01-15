@@ -60,6 +60,9 @@
               K[i] - Column using a predefined lookup table.
         For the rest
         XOR operation between K[i-4] K[i-1]
+
+        The decryption process is basically the same, the sub-key generation is deterministic so it will be the same sub-keys as encryption.
+        The rounds will be run in reverse order.
 */
 
 use crypto::symmetriccipher::SymmetricCipherError;
