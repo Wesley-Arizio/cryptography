@@ -1,5 +1,65 @@
 /*
     AES - Advanced Encryption Standard
+
+    Key points about this algorithm
+    -> There is three different lengths for the secret key: 128, 192 and 256
+    -> It uses 10, 12 or 14 rounds depending on the secret key length 128, 192, 256 respectively.
+    -> It's a block cipher but very different from DES, it stores plaintext, key and ciphertext in matrix form.
+    -> Most advanced crypto system.
+
+    The plain text is divided into 128 bits block
+    In each round we use 1 sub-key and the original private key.
+    the ciphertext block is also 128 bits.
+
+    How it works?
+
+    First we store the plaintext block into a 4x4 matrix, in which each entry is 1 byte (8 bits), hence 16 x 8 = 128 bits.
+    The same with the secret key.
+
+    Steps of the algorithm
+
+    - Add round key
+      bitwise XOR operation between plaintext block and the 128 bit private key
+
+    - S-BOX (Substitute box)
+      The input and output are 128 bits.
+      For each entry in a plaintext block (1 byte 8 bits) we do a S-BOX operation that is basically a lookup table where
+      in the 8 bits of the entry, 4 are the row index and 4 are the columns index, the output is the value in the table in that row col position that contains 8 bits as well.
+      ex: 01011100 row: 0101 col: 1100
+
+      Since there is 4 bits for the row and 4 bits for the col, the lookup table is 16x16
+      more about the table: https://en.wikipedia.org/wiki/Rijndael_S-box
+
+    - Shift rows (left shift)
+      Circular left shift in rows of the plaintext block (which at this point passed through S-BOX operation).
+      each byte in a row will shift tho the left according the the row's index.
+
+    - Mix columns (This step is not run on the last round)
+      Matrix multiplication between the input (output of the last step) and a predefined table
+
+      more about the predefined table: https://en.wikipedia.org/wiki/Rijndael_MixColumns
+
+    - Add round key
+      bitwise XOR operation between cipher block and the 128 bit sub-key
+
+    Sub-key generation
+    In this step we have the secret key represented as a 4x4 matrix (just as explained in the beginning)
+    For each round we'll generate a new sub-key of 128 bits, by calculating a new matrix based on the secret key
+        FOR THE FIRST ROW OF EACH KEY
+            - First we apply rotation operations, kinda like a left shift operation but we shift the bytes on step upwards circularly.
+            ex: 03 ->   ba
+                ba      4f
+                4f      4a
+                4a      03
+            - Then there is S-BOX operation, which is the same one as earlier.
+              so each value in this row will be changed by the output of the S-BOX operation.
+
+            - Then there is a XOR operation between 3 rows
+              K[i-4]
+              K[i-1] -> Column I'm using as base for creation of the next one, which is the output of the S-BOX operation in the step above.
+              K[i] - Column using a predefined lookup table.
+        For the rest
+        XOR operation between K[i-4] K[i-1]
 */
 
 use crypto::symmetriccipher::SymmetricCipherError;
