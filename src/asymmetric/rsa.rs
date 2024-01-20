@@ -25,6 +25,19 @@
 
     euclidean algorithm
     Efficient algorithm to find the greatest common divisor between two numbers.
+
+    modular inverse
+    the inverse of a is a.pow(1) multiplied by a that's equal to 1
+
+    in modular arithmetic is kinda same
+    a * a.pow(-1) mod m == 1;
+
+    only numbers coprime to m will have modular inverse.
+
+    extended euclidean algorithm
+    it yields the GCD of a and b and also two coefficients x and y.
+
+    a * x + b * y = gcd(a, b);
 */
 
 fn euclidean_gcd(a: i32, b: i32) -> i32 {
@@ -34,6 +47,26 @@ fn euclidean_gcd(a: i32, b: i32) -> i32 {
 
     euclidean_gcd(b, a % b)
 }
+fn modular_inverse(a: u32, m: u32) -> Option<u32> {
+    for i in 0..m {
+        // only numbers coprime to m will have a modular inverse
+        if (a * i) % m == 1 {
+            return Some(i);
+        };
+    }
+
+    None
+}
+
+// a is always smaller value
+fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
+    return if b == 0 {
+        (a, 1, 0)
+    } else {
+        let (gcd, x, y) = extended_gcd(b, a % b);
+        (gcd, y, x - (a / b) * y)
+    };
+}
 
 #[cfg(test)]
 mod tests {
@@ -41,5 +74,11 @@ mod tests {
     #[test]
     fn test_euclidean_gcd() {
         assert_eq!(euclidean_gcd(24, 9), 3);
+        assert_eq!(extended_gcd(15, 56), (1, 15, -4));
+    }
+    #[test]
+    fn test_modular_inverse() {
+        assert_eq!(modular_inverse(9, 31), Some(7));
+        // (7 * 9) % 31 == 1
     }
 }
