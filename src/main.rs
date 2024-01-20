@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+mod asymmetric;
 mod symmetric;
 
 const IV: &[u8; 16] = b"0000000000000000";
