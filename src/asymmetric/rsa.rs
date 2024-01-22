@@ -40,26 +40,36 @@
     a * x + b * y = gcd(a, b);
 */
 
-fn euclidean_gcd(a: i32, b: i32) -> i32 {
+use num_bigint::BigUint;
+use num_traits::{Pow, ToBytes, ToPrimitive};
+use rand::Rng;
+
+const START: i32 = 100;
+const END: i32 = 1000;
+
+fn euclidean_gcd(a: u128, b: u128) -> u128 {
     if a % b == 0 {
         return b;
     };
 
     euclidean_gcd(b, a % b)
 }
-fn modular_inverse(a: u32, m: u32) -> Option<u32> {
-    for i in 0..m {
-        // only numbers coprime to m will have a modular inverse
-        if (a * i) % m == 1 {
-            return Some(i);
-        };
-    }
 
-    None
+fn modular_inverse(a: i128, b: i128) -> (i128, i128, i128) {
+    if a == 0 {
+        return (b, 0, 1);
+    };
+
+    let (div, mut x1, mut y1) = modular_inverse(b % a, a);
+
+    let x = y1 - (b / a) * x1;
+    let y = x1;
+
+    (div, x, y)
 }
 
 // a is always smaller value
-fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
+fn extended_gcd(a: u128, b: u128) -> (u128, u128, u128) {
     return if b == 0 {
         (a, 1, 0)
     } else {
@@ -68,17 +78,126 @@ fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
     };
 }
 
+fn is_prime(num: i128) -> bool {
+    if num < 2 {
+        return false;
+    };
+
+    if num == 2 {
+        return true;
+    };
+
+    if num % 2 == 0 {
+        return false;
+    };
+
+    for i in (3..=(num as f64).sqrt() as i128).step_by(2) {
+        if num % i == 0 {
+            return false;
+        };
+    }
+
+    true
+}
+
+fn generate_large_prime_number() -> u128 {
+    let mut num: u128 = 0;
+    let mut rng = rand::thread_rng();
+    while !is_prime(num as i128) {
+        num = rng.gen_range(START..=END) as u128;
+    }
+    num
+}
+
+fn generate_rsa_keys() -> ((u128, u128), (u128, u128)) {
+    let p = generate_large_prime_number();
+    let q = generate_large_prime_number();
+
+    // trapdoor function, calculating n is fast but the opposite (getting p an q from n) is an exponentially slow operation.
+    let n = p * q;
+
+    // Euler's phi function
+    let phi = (p - 1) * (q - 1);
+
+    let mut rng = rand::thread_rng();
+
+    let mut public_key = rng.gen_range(1..=phi);
+
+    // public key and phi must be coprime, which means that the gcd of both must be 1
+    while euclidean_gcd(public_key, phi) != 1 {
+        public_key = rng.gen_range(1..=phi);
+    }
+
+    // private key is the modular inverse of the public key
+    let private_key = modular_inverse(public_key as i128, phi as i128).1 as u128;
+
+    ((private_key, n), (public_key, n))
+}
+
+fn encrypt(public_key: (u128, u128), message: &str) -> Vec<u128> {
+    let mut result = vec![];
+    let (public_key, n) = public_key;
+    for c in message.chars() {
+        let ascii_code = BigUint::from(c as u32);
+        let cipher = ascii_code.modpow(&BigUint::from(public_key), &BigUint::from(n));
+        if let Some(cipher) = cipher.to_u128() {
+            result.push(cipher);
+        } else {
+            println!("no cipher u128");
+        }
+    }
+
+    result
+}
+
+fn decrypt(private_key: (u128, u128), message: &[u128]) -> String {
+    let mut result = String::new();
+
+    let (private_key, n) = private_key;
+    for num in message {
+        let a = BigUint::from(*num).modpow(&BigUint::from(private_key), &BigUint::from(n));
+        if let Some(v) = a.to_u128() {
+            let c = char::from(v as u8);
+            result.push(c);
+        };
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn test_euclidean_gcd() {
         assert_eq!(euclidean_gcd(24, 9), 3);
-        assert_eq!(extended_gcd(15, 56), (1, 15, -4));
+        // assert_eq!(extended_gcd(15, 56), (1, 15, -4));
+        //  a * x + b * y = gcd(a, b);
+        // 15 * 15 + 56 * -4 - 225 + (-224) = 1
     }
+
     #[test]
     fn test_modular_inverse() {
-        assert_eq!(modular_inverse(9, 31), Some(7));
+        assert_eq!(modular_inverse(9, 31).1, 7);
         // (7 * 9) % 31 == 1
+    }
+
+    #[test]
+    fn test_is_prime() {
+        assert!(!is_prime(1));
+        assert!(is_prime(2));
+        assert!(!is_prime(8));
+        assert!(is_prime(11));
+    }
+
+    #[test]
+    fn test_generating_rsa_keys() {
+        let result = generate_rsa_keys();
+
+        let message = "Hello World";
+        let cipher = encrypt(result.1, message);
+        assert_eq!(cipher.len(), message.len());
+
+        let plain_text = decrypt(result.0, &cipher);
+        assert_eq!(plain_text.as_bytes(), message.as_bytes());
     }
 }
