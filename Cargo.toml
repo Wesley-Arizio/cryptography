@@ -12,3 +12,8 @@ rust-crypto = "0.2.36"
 hex = "0.4.3"
 num-bigint = "0.4.4"
 num-traits = "0.2.17"
+
+# rename the binary output file.
+[[bin]]
+name = "criptografia"
+path = "src/main.rs"
