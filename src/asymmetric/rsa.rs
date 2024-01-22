@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /*
     Rivest, Shamir and Adleman - RSA crypto system.
     Public key crypto system, contains public and private keys.
@@ -41,7 +42,7 @@
 */
 
 use num_bigint::BigUint;
-use num_traits::{Pow, ToBytes, ToPrimitive};
+use num_traits::ToPrimitive;
 use rand::Rng;
 
 const START: i32 = 100;
@@ -60,7 +61,7 @@ fn modular_inverse(a: i128, b: i128) -> (i128, i128, i128) {
         return (b, 0, 1);
     };
 
-    let (div, mut x1, mut y1) = modular_inverse(b % a, a);
+    let (div, x1, y1) = modular_inverse(b % a, a);
 
     let x = y1 - (b / a) * x1;
     let y = x1;
