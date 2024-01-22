@@ -42,7 +42,7 @@
 */
 
 use num_bigint::BigUint;
-use num_traits::ToPrimitive;
+use num_traits::{FromBytes, ToBytes, ToPrimitive};
 use rand::Rng;
 
 const START: i32 = 100;
@@ -135,28 +135,25 @@ fn generate_rsa_keys() -> ((u128, u128), (u128, u128)) {
     ((private_key, n), (public_key, n))
 }
 
-fn encrypt(public_key: (u128, u128), message: &str) -> Vec<u128> {
+fn encrypt(public_key: (u128, u128), message: &str) -> Vec<Vec<u8>> {
     let mut result = vec![];
     let (public_key, n) = public_key;
-    for c in message.chars() {
-        let ascii_code = BigUint::from(c as u32);
-        let cipher = ascii_code.modpow(&BigUint::from(public_key), &BigUint::from(n));
-        if let Some(cipher) = cipher.to_u128() {
-            result.push(cipher);
-        } else {
-            println!("no cipher u128");
-        }
+    for &c in message.as_bytes() {
+        let cipher = BigUint::from(c).modpow(&BigUint::from(public_key), &BigUint::from(n));
+        result.push(cipher.to_bytes_le());
     }
 
     result
 }
 
-fn decrypt(private_key: (u128, u128), message: &[u128]) -> String {
+fn decrypt(private_key: (u128, u128), message: &Vec<Vec<u8>>) -> String {
     let mut result = String::new();
 
     let (private_key, n) = private_key;
-    for num in message {
-        let a = BigUint::from(*num).modpow(&BigUint::from(private_key), &BigUint::from(n));
+    for num in message.iter() {
+        let t = BigUint::from_bytes_le(num);
+        let a = t.modpow(&BigUint::from(private_key), &BigUint::from(n));
+
         if let Some(v) = a.to_u128() {
             let c = char::from(v as u8);
             result.push(c);
