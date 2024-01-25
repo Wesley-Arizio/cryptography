@@ -42,7 +42,7 @@
 */
 
 use num_bigint::BigUint;
-use num_traits::{FromBytes, ToBytes, ToPrimitive};
+use num_traits::ToPrimitive;
 use rand::Rng;
 
 const START: i32 = 100;
